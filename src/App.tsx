@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import {DndProvider, useDrag} from 'react-dnd';
+import {DndProvider, useDrag, useDrop} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 
 export default function App() {
@@ -9,9 +9,9 @@ export default function App() {
         <div className="app">
           {/* math card */}
           <div className="math-card">
-            <div className="spot">1</div>
-            <div className="spot">1</div>
-            <div className="spot">+</div>
+            <Spot type="number"></Spot>
+            <Spot type="number"></Spot>
+            <Spot type="operator"></Spot>
             <div className="total">2</div>
           </div>
 
@@ -20,13 +20,13 @@ export default function App() {
               {Array(10)
                   .fill(0)
                   .map((n, i) => (
-                      <Number key={i} text={i}/>
+                      <Card key={i} text={i} type="number"/>
                   ))}
             </div>
 
             <div className="cards operators">
               {['*', '-', '+', '/'].map((o, i) => (
-                  <Operator key={i} text={o}/>
+                  <Card key={i} text={o} type="operator"/>
               ))}
             </div>
           </div>
@@ -35,11 +35,37 @@ export default function App() {
   );
 }
 
-const Number = (props: { text: number }) => {
-  const {text} = props;
+const Spot = (props: { type: string }) => {
+  const {type} = props;
+  const [{canDrop, isOver}, dropRef] = useDrop({
+    accept: type,
+    drop: item => console.log(item),
+    collect: monitor => ({
+      isOver: !!monitor.isOver(),
+      canDrop: monitor.canDrop()
+    })
+  });
+
+  let backgroundColor = '#f2f2f2';
+  if (canDrop) backgroundColor = '#3db897';
+  if (isOver) backgroundColor = '#4bdcb5';
+
+  return (
+      <div
+          className="spot"
+          ref={dropRef}
+          style={{ backgroundColor }}
+      >
+        0
+      </div>
+  )
+}
+
+const Card = (props: { text: number | string, type: string }) => {
+  const {text, type} = props;
   const [{opacity}, dragRef] = useDrag(() => ({
-        type: 'number',
-        number: { text },
+        type,
+        number: {text},
         collect: (monitor) => ({
           opacity: monitor.isDragging() ? 0.5 : 1
         })
